@@ -1632,9 +1632,21 @@ public class JmDNSImpl extends JmDNS implements DNSStatefulObject, DNSTaskStarte
                     logger.debug(getClass().toString(), ".send(" + this.getName() + ") - JmDNS can not parse what it sends!!!", e);
                 }
             }
-            final MulticastSocket ms = _socket;
-            if (ms != null && !ms.isClosed()) {
-                ms.send(packet);
+
+            try {
+                InetSocketAddress address = new InetSocketAddress(_localHost.getInetAddress(), 0);
+                MulticastSocket socket = new MulticastSocket(address);
+                if (socket != null && !socket.isClosed()) {
+                    socket.setTimeToLive(255);
+                    socket.setBroadcast(true);
+                    socket.send(packet);
+                    socket.close();
+                }
+            } catch(BindException e) {
+                final MulticastSocket ms = _socket;
+                if (ms != null && !ms.isClosed()) {
+                    ms.send(packet);
+                }
             }
         }
     }
